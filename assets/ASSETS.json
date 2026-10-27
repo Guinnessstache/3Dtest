@@ -48,6 +48,24 @@
       ],
       "bytes": 4229130,
       "added": "2026-10-27T23:11:50.992Z"
+    },
+    {
+      "id": "pp-BG0KAhmGDt",
+      "name": "Car Hatchback",
+      "type": "models",
+      "source": "Poly Pizza",
+      "url": "https://poly.pizza/m/BG0KAhmGDt",
+      "license": "CC0",
+      "authors": [
+        "Kay Lousberg"
+      ],
+      "lowPoly": true,
+      "entry": "assets/models/car-hatchback-BG0KAhmGDt/car-hatchback.glb",
+      "files": [
+        "assets/models/car-hatchback-BG0KAhmGDt/car-hatchback.glb"
+      ],
+      "bytes": 82232,
+      "added": "2026-10-27T23:25:31.955Z"
     }
   ]
 }
