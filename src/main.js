@@ -6,6 +6,7 @@ import { createGround, createArenaEdge } from './ground.js'
 import { createGems } from './gems.js'
 import { createCar } from './car.js'
 import { createFx } from './fx.js'
+import { createSky, SKY_FOG_COLOR } from './sky.js'
 
 const BALL_RADIUS = 1
 const ARENA = 24
@@ -15,21 +16,30 @@ const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.shadowMap.enabled = true
+renderer.toneMapping = THREE.ACESFilmicToneMapping // filmic rolloff so the HDR sky doesn't clip
+renderer.toneMappingExposure = 1.0
 document.body.appendChild(renderer.domElement)
 
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x9dc4e0)
-scene.fog = new THREE.Fog(0x9dc4e0, 34, 95)
+// Placeholder horizon haze until the HDRI arrives, then match fog to the sky.
+scene.background = new THREE.Color(SKY_FOG_COLOR)
+scene.fog = new THREE.Fog(SKY_FOG_COLOR, 40, 130)
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200)
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000)
 
-scene.add(new THREE.HemisphereLight(0xdff0ff, 0x3a4a2c, 1.15))
-const sun = new THREE.DirectionalLight(0xfff4d6, 2.4)
-sun.position.set(10, 20, 8)
+// The HDRI does most of the ambient work now; these just shape the shadows and
+// get re-tinted by createSky to suit whatever sky actually loaded.
+const hemi = new THREE.HemisphereLight(0xdff0ff, 0x3a4a2c, 0.35)
+scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xfff0d0, 1.9)
+sun.position.set(-18, 22, -12)
 sun.castShadow = true
 sun.shadow.camera.left = sun.shadow.camera.bottom = -30
 sun.shadow.camera.right = sun.shadow.camera.top = 30
+sun.shadow.bias = -0.0005
 scene.add(sun)
+
+createSky(scene, { environmentIntensity: 0.7, blur: 0.08, sunLight: sun, hemiLight: hemi })
 
 createGround(scene, renderer, ARENA)
 createArenaEdge(scene, ARENA)

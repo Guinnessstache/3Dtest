@@ -3,7 +3,7 @@ html, body { margin: 0; height: 100%; background: #0d1117; overflow: hidden; }
 canvas { display: block; }
 #hud, #help { position: fixed; left: 16px; color: #fff; font: 600 20px system-ui, sans-serif; pointer-events: none; text-shadow: 0 1px 3px #000; }
 #hud { top: 14px; }
-#help { top: 44px; font-size: 13px; font-weight: 400; color: #b8c4dd; max-width: 60ch; }
+#help { top: 44px; font-size: 13px; font-weight: 400; color: #e8eefb; max-width: 60ch; text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
 
 /* Proximity warning for the chasing car */
 #warn {
