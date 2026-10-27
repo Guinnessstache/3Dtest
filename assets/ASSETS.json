@@ -66,6 +66,24 @@
       ],
       "bytes": 82232,
       "added": "2026-10-27T23:25:31.955Z"
+    },
+    {
+      "id": "kloppenheim_02",
+      "name": "Kloppenheim 02",
+      "type": "hdris",
+      "source": "Poly Haven",
+      "url": "https://polyhaven.com/a/kloppenheim_02",
+      "license": "CC0",
+      "authors": [
+        "Greg Zaal"
+      ],
+      "resolution": "1k",
+      "entry": "assets/skies/kloppenheim_02_1k.hdr",
+      "files": [
+        "assets/skies/kloppenheim_02_1k.hdr"
+      ],
+      "bytes": 1740414,
+      "added": "2026-10-27T23:42:27.696Z"
     }
   ]
 }
