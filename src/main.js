@@ -3,6 +3,9 @@
 // Models: put .glb files in /assets and load them with GLTFLoader from
 // 'three/addons/loaders/GLTFLoader.js'.
 import * as THREE from 'three'
+import { createBarrels, bounceOffBarrels, updateBarrels, blockedByBarrel } from './barrels.js'
+
+const BALL_RADIUS = 1
 
 const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -42,12 +45,21 @@ player.position.y = 1
 player.castShadow = true
 scene.add(player)
 
+// Barrels: solid obstacles scattered around the arena that the ball bounces off.
+const barrels = createBarrels(scene)
+
 const gems = []
 const gemGeo = new THREE.OctahedronGeometry(0.6)
 const gemMat = new THREE.MeshStandardMaterial({ color: 0xffd166, emissive: 0x664400 })
 function spawnGem() {
   const gem = new THREE.Mesh(gemGeo, gemMat)
-  gem.position.set((Math.random() - 0.5) * ARENA * 1.6, 1, (Math.random() - 0.5) * ARENA * 1.6)
+  let x = 0
+  let z = 0
+  do {
+    x = (Math.random() - 0.5) * ARENA * 1.6
+    z = (Math.random() - 0.5) * ARENA * 1.6
+  } while (blockedByBarrel(x, z, barrels, 2.5))
+  gem.position.set(x, 1, z)
   gem.castShadow = true
   scene.add(gem)
   gems.push(gem)
@@ -59,6 +71,8 @@ addEventListener('keydown', (e) => (keys[e.code] = true))
 addEventListener('keyup', (e) => (keys[e.code] = false))
 
 let score = 0
+let bumpTimer = 0
+let lastBarrelCount = -1
 const hud = document.getElementById('hud')
 const velocity = new THREE.Vector3()
 const timer = new THREE.Timer()
@@ -76,6 +90,24 @@ function tick() {
   velocity.addScaledVector(input, 30 * dt)
   velocity.multiplyScalar(1 - 2.5 * dt)
   player.position.addScaledVector(velocity, dt)
+
+  if (bounceOffBarrels(player.position, velocity, barrels, BALL_RADIUS)) {
+    hud.textContent = `Score: ${score}   BONK!`
+    clearTimeout(bumpTimer)
+    bumpTimer = setTimeout(() => (hud.textContent = `Score: ${score}`), 350)
+  }
+  updateBarrels(barrels, dt)
+
+  // Barrels finish loading asynchronously: move any gem that ended up inside one.
+  if (barrels.length !== lastBarrelCount) {
+    lastBarrelCount = barrels.length
+    for (const gem of gems) {
+      if (blockedByBarrel(gem.position.x, gem.position.z, barrels, 2.5)) {
+        gem.position.set((Math.random() - 0.5) * ARENA * 1.6, 1, (Math.random() - 0.5) * ARENA * 1.6)
+      }
+    }
+  }
+
   player.position.x = THREE.MathUtils.clamp(player.position.x, -ARENA + 1, ARENA - 1)
   player.position.z = THREE.MathUtils.clamp(player.position.z, -ARENA + 1, ARENA - 1)
   player.rotation.x += velocity.z * dt
