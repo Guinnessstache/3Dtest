@@ -1,10 +1,34 @@
 // Barrels: load the Poly Haven Barrel_01 glTF, place copies around the arena,
-// and expose simple circle colliders the ball bounces off.
+// and expose simple circle colliders the ball bounces off. They are also rigged
+// as hazards: ram one and it detonates (see `detonate`), which ends the run.
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 
 const MODEL_URL = 'assets/models/Barrel_01/Barrel_01.gltf'
 const TARGET_HEIGHT = 3.2 // barrels are scaled so they read well next to the ball
+const IMPACT_SPEED = 7.5 // how fast the ball must be travelling to set one off
+
+// A barrel that has been blown: hidden, no collider, and a scorch mark left over.
+function killBarrel(scene, c) {
+  c.alive = false
+  c.mesh.visible = false
+  c.hitT = 0
+  if (!c.scorch) {
+    c.scorch = new THREE.Mesh(
+      new THREE.CircleGeometry(c.radius * 1.9, 28),
+      new THREE.MeshBasicMaterial({ color: 0x1a130c, transparent: true, opacity: 0.65, depthWrite: false })
+    )
+    c.scorch.rotation.x = -Math.PI / 2
+    c.scorch.position.set(c.x, 0.04, c.z)
+  }
+  c.scorch.visible = true
+  scene.add(c.scorch)
+}
+
+// Ramming check: true when the ball is moving fast enough to set it off.
+function shouldDetonate(into, speed) {
+  return speed > IMPACT_SPEED || Math.abs(into) > IMPACT_SPEED * 0.6
+}
 
 // Where the barrels stand (x, z) and a per-barrel spin for variety.
 export const BARREL_SPOTS = [
@@ -32,7 +56,7 @@ export function createBarrels(scene, spots = BARREL_SPOTS) {
         }
       })
       scene.add(barrel)
-      colliders.push({ x: spot.x, z: spot.z, radius: 0, mesh: barrel, hitT: 0 })
+      colliders.push({ x: spot.x, z: spot.z, radius: 0, mesh: barrel, hitT: 0, alive: true, yaw: spot.rot })
     }
   }
 
@@ -69,10 +93,13 @@ export function createBarrels(scene, spots = BARREL_SPOTS) {
 }
 
 // Push the ball out of any barrel it overlaps and reflect its velocity.
-// Returns true when a bounce happened this frame.
-export function bounceOffBarrels(position, velocity, colliders, ballRadius) {
+// Returns { bounced, boom } where `boom` is the first barrel rammed hard enough
+// to detonate (that ends the run).
+export function checkBarrels(position, velocity, colliders, ballRadius) {
   let bounced = false
+  let boom = null
   for (const c of colliders) {
+    if (!c.alive) continue
     const dx = position.x - c.x
     const dz = position.z - c.z
     const minDist = c.radius + ballRadius
@@ -89,7 +116,9 @@ export function bounceOffBarrels(position, velocity, colliders, ballRadius) {
 
     // Mirror the velocity along the contact normal, losing a little energy.
     const into = velocity.x * nx + velocity.z * nz
+    const speed = velocity.length()
     if (into < 0) {
+      if (!boom && shouldDetonate(into, speed)) boom = c
       const RESTITUTION = 0.72
       velocity.x -= (1 + RESTITUTION) * into * nx
       velocity.z -= (1 + RESTITUTION) * into * nz
@@ -101,13 +130,21 @@ export function bounceOffBarrels(position, velocity, colliders, ballRadius) {
     }
     bounced = true
   }
-  return bounced
+  return { bounced, boom }
+}
+
+// Blow a barrel: burst of debris + scorch mark. Returns the blast position.
+export function detonate(scene, fx, c) {
+  const at = new THREE.Vector3(c.x, 1.1, c.z)
+  fx.explode(at, { count: 26, power: 1.5, color: 0xff7b1c })
+  killBarrel(scene, c)
+  return at
 }
 
 // Decay the wobble a barrel plays after being hit.
 export function updateBarrels(colliders, dt) {
   for (const c of colliders) {
-    if (c.hitT <= 0) continue
+    if (!c.alive || c.hitT <= 0) continue
     c.hitT = Math.max(0, c.hitT - dt * 2.6)
     const w = c.hitT * 0.14
     c.mesh.rotation.x = Math.sin(c.hitT * 22) * w
@@ -115,13 +152,25 @@ export function updateBarrels(colliders, dt) {
   }
 }
 
-// True when a point is too close to any barrel (used to keep gems reachable).
+// True when a point is too close to any live barrel (used to keep gems reachable).
 export function blockedByBarrel(x, z, colliders, margin) {
   for (const c of colliders) {
+    if (!c.alive) continue
     const dx = x - c.x
     const dz = z - c.z
     const r = c.radius + margin
     if (dx * dx + dz * dz < r * r) return true
   }
   return false
+}
+
+// Put every barrel back for a new run.
+export function resetBarrels(colliders) {
+  for (const c of colliders) {
+    c.alive = true
+    c.hitT = 0
+    c.mesh.visible = true
+    c.mesh.rotation.set(0, c.yaw ?? 0, 0)
+    if (c.scorch) c.scorch.visible = false
+  }
 }

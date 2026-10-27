@@ -1,23 +1,37 @@
 # 3Dtest
 
 ## Concept
-A 3D starter: roll a ball around an arena collecting spinning gems.
+Roll a ball around a sunny grass arena grabbing skittish gems while a low-poly
+hatchback hunts you down. Barrels are solid — and volatile if you hit them hard.
 
 ## Controls
 - WASD / arrows: roll
+- R or Enter (or click the card): restart after a game over
 
 ## Current features
-- Grassy lawn arena (Poly Haven "Leafy Grass" PBR colour/normal/roughness tiles,
-  new src/ground.js) with a low hedge marking the bounds, daylight sky fog
-- Lit arena with shadows and a follow camera
-- Ball with momentum
-- Gems that respawn when collected (never inside a barrel)
-- 5 Barrel_01 props (Poly Haven, CC0) placed around the arena — solid obstacles
-  with circle colliders: the ball reflects off them (with a little energy loss),
-  the barrels wobble on impact and the HUD flashes "BONK!"
-- Score HUD
+- Grassy lawn arena (Poly Haven "Leafy Grass" PBR tiles, src/ground.js) with a
+  low hedge marking the bounds, daylight sky + fog, shadows
+- **Moving gems** (src/gems.js): six gems wander the lawn, bounce off the hedge
+  and barrels, and flee when the ball gets close. Collecting one is +10 and it
+  respawns somewhere else.
+- **The car** (src/car.js): Poly Haven low-poly hatchback, auto-scaled to ~4.2 m
+  and auto-oriented so it drives nose-first. It steers toward the player, probes
+  ahead for barrels (reverses and swings around them) and turns back at the
+  hedge. Wheels spin. **Touching it = game over** ("FLATTENED!").
+  Each gem collected makes it faster (9.5 → 15 m/s cap).
+- **Explosive barrels** (src/barrels.js): five Barrel_01 props with circle
+  colliders. A soft bump still bounces you, but hitting one at speed detonates
+  it — debris + shockwave + scorch mark — and ends the run ("KABOOM!").
+- FX module (src/fx.js): pooled shard/ring/flash explosions and camera shake.
+- HUD: score, a blinking "Car closing in / CAR!" proximity warning, and a game
+  over card showing score and best.
+
+## Hazards / game over
+- Touched by the car
+- Ramming a barrel too fast (slow nudges are safe bounces)
 
 ## Ideas / to do
-- Barrel hit sound effect
-- Knock barrels over / push them when hit fast enough
+- Explosion + engine sounds
+- A pickup that freezes or slows the car for a few seconds
 - Scattered grass tufts / flowers for silhouette break-up on the lawn
+- Difficulty ramp: a second car after a high score

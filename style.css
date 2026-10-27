@@ -3,4 +3,27 @@ html, body { margin: 0; height: 100%; background: #0d1117; overflow: hidden; }
 canvas { display: block; }
 #hud, #help { position: fixed; left: 16px; color: #fff; font: 600 20px system-ui, sans-serif; pointer-events: none; text-shadow: 0 1px 3px #000; }
 #hud { top: 14px; }
-#help { top: 44px; font-size: 13px; font-weight: 400; color: #b8c4dd; }
+#help { top: 44px; font-size: 13px; font-weight: 400; color: #b8c4dd; max-width: 60ch; }
+
+/* Proximity warning for the chasing car */
+#warn {
+  position: fixed; top: 14px; right: 18px; color: #ff5a5a;
+  font: 800 20px system-ui, sans-serif; letter-spacing: 0.06em;
+  text-shadow: 0 1px 4px #000; pointer-events: none; opacity: 0;
+  transition: opacity 0.2s ease;
+}
+#warn.show { opacity: 1; animation: blink 0.7s steps(2, end) infinite; }
+@keyframes blink { 50% { opacity: 0.35; } }
+
+/* Game over card */
+#banner {
+  position: fixed; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px;
+  background: radial-gradient(circle at 50% 45%, rgba(60,10,10,0.35), rgba(6,8,14,0.78));
+  color: #fff; font-family: system-ui, sans-serif; text-align: center;
+  opacity: 0; visibility: hidden; transition: opacity 0.25s ease; cursor: pointer;
+}
+#banner.show { opacity: 1; visibility: visible; }
+#banner b { font-size: 46px; letter-spacing: 0.03em; text-shadow: 0 3px 12px #000; }
+#banner span { font-size: 20px; color: #ffd166; }
+#banner em { font-size: 15px; font-style: normal; color: #cfd8ea; margin-top: 6px; }
