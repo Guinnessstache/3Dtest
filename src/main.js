@@ -5,10 +5,10 @@ import { createBarrels, checkBarrels, detonate, updateBarrels, resetBarrels } fr
 import { createGround, createArenaEdge } from './ground.js'
 import { createGems } from './gems.js'
 import { createCar } from './car.js'
+import { createPlayer, PLAYER_RADIUS } from './player.js'
 import { createFx } from './fx.js'
 import { createSky, SKY_FOG_COLOR } from './sky.js'
 
-const BALL_RADIUS = 1
 const ARENA = 24
 const GEM_SCORE = 10
 
@@ -80,13 +80,7 @@ createSky(scene, {
 createGround(scene, renderer, ARENA)
 createArenaEdge(scene, ARENA)
 
-const player = new THREE.Mesh(
-  new THREE.SphereGeometry(BALL_RADIUS, 32, 16),
-  new THREE.MeshStandardMaterial({ color: 0x4cc9f0, roughness: 0.3 })
-)
-player.position.y = BALL_RADIUS
-player.castShadow = true
-scene.add(player)
+const player = createPlayer(scene)
 
 const barrels = createBarrels(scene)
 const fx = createFx(scene)
@@ -156,9 +150,7 @@ function restart() {
   state.reason = ''
   score = 0
   velocity.set(0, 0, 0)
-  player.position.set(0, BALL_RADIUS, 0)
-  player.visible = true
-  player.scale.set(1, 1, 1)
+  player.reset()
   resetBarrels(barrels)
   gems.reset()
   car.reset()
@@ -184,7 +176,7 @@ function tick() {
     player.position.addScaledVector(velocity, dt)
 
     // Barrels are solid obstacles — and volatile ones if you hit them hard.
-    const { bounced, boom } = checkBarrels(player.position, velocity, barrels, BALL_RADIUS)
+    const { bounced, boom } = checkBarrels(player.position, velocity, barrels, player.radius)
     if (boom) {
       detonate(scene, fx, boom)
       fx.explode(player.position, { count: 14, power: 1.2, color: 0x8fd8ff })
@@ -205,8 +197,9 @@ function tick() {
     // Rest the ball against the inside of the hedge.
     player.position.x = THREE.MathUtils.clamp(player.position.x, -ARENA + 1.6, ARENA - 1.6)
     player.position.z = THREE.MathUtils.clamp(player.position.z, -ARENA + 1.6, ARENA - 1.6)
-    player.rotation.x += velocity.z * dt
-    player.rotation.z -= velocity.x * dt
+
+    // Face where it's rolling, lean into the throttle, waddle along.
+    player.update(dt, velocity, elapsed)
 
     const got = gems.update(dt, player.position, elapsed)
     if (got) {
@@ -220,8 +213,11 @@ function tick() {
     warn.classList.toggle('show', gap < 12)
     if (gap < 12) warn.textContent = gap < 6 ? 'CAR! CAR! CAR!' : 'Car closing in'
     if (caught) {
-      player.scale.set(1.6, 0.25, 1.6) // squashed flat
-      fx.explode(player.position, { count: 24, power: 1.4, color: 0xff4d4d })
+      player.squash() // pancake the character
+      fx.explode(
+        new THREE.Vector3(player.position.x, 0.9, player.position.z),
+        { count: 24, power: 1.4, color: 0xff4d4d }
+      )
       gameOver('FLATTENED! The car got you')
     }
   }
@@ -246,7 +242,7 @@ function tick() {
       .multiplyScalar(fx.shake * 1.4)
     camera.position.add(shakeOffset)
   }
-  lookTarget.set(player.position.x, 0.6, player.position.z)
+  lookTarget.set(player.position.x, 0.85, player.position.z)
   camera.lookAt(lookTarget)
 
   renderer.render(scene, camera)

@@ -10,6 +10,12 @@ hatchback hunts you down. Barrels are solid — and volatile if you hit them har
 - R or Enter (or click the card): restart after a game over
 
 ## Current features
+- **The player is your BallCharacter** (src/player.js, `assets/models/ballcharacter/ballcharacter.glb`):
+  loaded with GLTFLoader, auto-scaled to 1.75 m and stood on the grass whatever
+  its origin ended up as. It swivels to face where it rolls, leans into the
+  throttle, waddle-bobs faster the quicker it goes, spins its energy rings and
+  pulses its emissive arcs — and squashes flat when the car reaches it. A
+  code-built ball stands in if the glb ever fails to load.
 - Grassy lawn arena (Poly Haven "Leafy Grass" PBR tiles, src/ground.js) with a
   low hedge marking the bounds, shadows, and an open view of the countryside
 - **Real sky** (src/sky.js): the Poly Haven HDRI **"Kloppenheim 03 (Pure Sky)"**
