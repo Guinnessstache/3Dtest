@@ -7,5 +7,6 @@ Third-party assets used in this game.
 - **Car Hatchback** by Kay Lousberg, from [Poly Pizza](https://poly.pizza/m/BG0KAhmGDt). License: CC0.
 - **Kloppenheim 02** by Greg Zaal, from [Poly Haven](https://polyhaven.com/a/kloppenheim_02). License: CC0.
 - **Kloppenheim 03 (Pure Sky)** by Greg Zaal, Jarod Guest, from [Poly Haven](https://polyhaven.com/a/kloppenheim_03_puresky). License: CC0.
+- **BallCharacter**, from My library. License: Own work.
 
 Poly Haven assets are CC0: https://polyhaven.com/license
