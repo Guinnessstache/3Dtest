@@ -4,9 +4,9 @@
 // Two things make it read as an actual skyline rather than "green mush":
 //  1. Use a *pure sky* panorama. A full dome shot (kloppenheim_02 — which is a
 //     night scene) photographs the meadow too, and its lower half is grass.
-//  2. Frame the horizon at eye level: with a chase camera that looks down ~18°,
-//     the top of a 60° vertical FOV lands *below* the horizon, so the "sky" you
-//     saw was the ground half of the panorama. See SKY_CAM_PITCH in main.js.
+//  2. Keep the chase camera's pitch under half the vertical FOV: past that the
+//     top of the frustum dips below the horizon and the "sky" becomes the ground
+//     half of the panorama. See CAM_PITCH / BASE_FOV in main.js.
 import * as THREE from 'three'
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js'
 

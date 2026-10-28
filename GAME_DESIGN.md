@@ -15,9 +15,11 @@ hatchback hunts you down. Barrels are solid — and volatile if you hit them har
   is the background *and* the environment map (image-based lighting), so props
   reflect the fields. ACES tone mapping, fog colour measured from the panorama's
   horizon band, and exposure/lights auto-tuned to the sky's brightness; a gradient
-  dome stands in if the .hdr ever fails to load. The chase camera looks down only
-  18° so the skyline stays in frame (a steeper pitch puts the horizon off-screen
-  and the ground half of any panorama reads as "green sky").
+  dome stands in if the .hdr ever fails to load. The chase camera is high and far
+  (34 m back at a 27° pitch, 66° FOV) so most of the board is visible *and* a band
+  of real skyline stays along the top of the screen — the horizon only disappears
+  once the pitch exceeds half the vertical FOV. Portrait screens widen the FOV to
+  keep the same amount of arena in frame.
 - **Moving gems** (src/gems.js): six gems wander the lawn, bounce off the hedge
   and barrels, and flee when the ball gets close. Collecting one is +10 and it
   respawns somewhere else.
