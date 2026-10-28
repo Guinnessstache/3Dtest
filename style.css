@@ -15,6 +15,16 @@ canvas { display: block; }
 #warn.show { opacity: 1; animation: blink 0.7s steps(2, end) infinite; }
 @keyframes blink { 50% { opacity: 0.35; } }
 
+/* Camera mode readout (press C to switch) */
+#cam {
+  position: fixed; bottom: 14px; right: 18px; color: #dbe7ff;
+  font: 700 12px system-ui, sans-serif; letter-spacing: 0.14em;
+  background: rgba(8, 14, 26, 0.45); border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px; padding: 5px 11px; pointer-events: auto; cursor: pointer;
+  text-shadow: 0 1px 3px #000; transition: color 0.2s ease;
+}
+#cam.flash { color: #ffd166; }
+
 /* Game over card */
 #banner {
   position: fixed; inset: 0; display: flex; flex-direction: column;

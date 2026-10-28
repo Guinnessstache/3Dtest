@@ -6,7 +6,8 @@
 //     night scene) photographs the meadow too, and its lower half is grass.
 //  2. Keep the chase camera's pitch under half the vertical FOV: past that the
 //     top of the frustum dips below the horizon and the "sky" becomes the ground
-//     half of the panorama. See CAM_PITCH / BASE_FOV in main.js.
+//     half of the panorama. Only the SKYLINE rig does this; the steeper TOP-DOWN
+//     rig frames no sky at all but shows far more of the board. See CAM_MODES.
 import * as THREE from 'three'
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js'
 

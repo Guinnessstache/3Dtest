@@ -6,6 +6,7 @@ hatchback hunts you down. Barrels are solid — and volatile if you hit them har
 
 ## Controls
 - WASD / arrows: roll
+- C (or click the CAM pill): switch chase camera (TOP-DOWN ⇄ SKYLINE)
 - R or Enter (or click the card): restart after a game over
 
 ## Current features
@@ -15,11 +16,16 @@ hatchback hunts you down. Barrels are solid — and volatile if you hit them har
   is the background *and* the environment map (image-based lighting), so props
   reflect the fields. ACES tone mapping, fog colour measured from the panorama's
   horizon band, and exposure/lights auto-tuned to the sky's brightness; a gradient
-  dome stands in if the .hdr ever fails to load. The chase camera is high and far
-  (34 m back at a 27° pitch, 66° FOV) so most of the board is visible *and* a band
-  of real skyline stays along the top of the screen — the horizon only disappears
-  once the pitch exceeds half the vertical FOV. Portrait screens widen the FOV to
-  keep the same amount of arena in frame.
+  dome stands in if the .hdr ever fails to load.
+- **Two chase cameras** (press C, or click the CAM pill). `TOP-DOWN` — default — sits 29 m out at a 47°
+  pitch with a 58° FOV: the whole board reads at a glance, props only hide a
+  short wedge behind them, and near/far objects are within ~2× of each other in
+  size. At that angle the frustum never reaches the horizon, so the sky is out of
+  frame (the HDRI still provides all lighting/reflections) and fog pulls in to
+  40–115 m. `SKYLINE` sits 34 m out at 26° with a 66° FOV — under half the
+  vertical FOV, which is what keeps a band of real skyline along the top of the
+  screen — with a long 70–230 m fog reach. Portrait screens widen either rig's
+  FOV to keep the same amount of arena in frame.
 - **Moving gems** (src/gems.js): six gems wander the lawn, bounce off the hedge
   and barrels, and flee when the ball gets close. Collecting one is +10 and it
   respawns somewhere else.
