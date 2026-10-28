@@ -1,19 +1,25 @@
-// Sky + image-based lighting from the Poly Haven HDRI "Kloppenheim 02".
-// The same texture becomes the visible background AND the environment map, so
-// the ball, barrels and car pick up real reflections of the fields around them.
+// Sky + image-based lighting from a Poly Haven HDRI. The same panorama is the
+// visible background AND the environment map, so props reflect real fields.
+//
+// Two things make it read as an actual skyline rather than "green mush":
+//  1. Use a *pure sky* panorama. A full dome shot (kloppenheim_02 — which is a
+//     night scene) photographs the meadow too, and its lower half is grass.
+//  2. Frame the horizon at eye level: with a chase camera that looks down ~18°,
+//     the top of a 60° vertical FOV lands *below* the horizon, so the "sky" you
+//     saw was the ground half of the panorama. See SKY_CAM_PITCH in main.js.
 import * as THREE from 'three'
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js'
 
-const SKY_URL = 'assets/skies/kloppenheim_02_1k.hdr'
+const SKY_URL = 'assets/skies/kloppenheim_03_puresky_1k.hdr'
 
-// Horizon haze tone used until (or unless) the HDRI is measured.
-export const SKY_FOG_COLOR = 0xa9bcc6
+// Placeholder horizon haze until (or unless) the HDRI arrives.
+export const SKY_FOG_COLOR = 0xbfd0da
 
 // Half-floats straight from an .hdr need expanding; floats do not.
 function readChannel(data, i, half) {
   if (!half) return data[i]
   const bits = data[i]
-  const sign = (bits & 0x8000) ? -1 : 1
+  const sign = bits & 0x8000 ? -1 : 1
   const exp = (bits >> 10) & 0x1f
   const frac = bits & 0x3ff
   if (exp === 0) return sign * Math.pow(2, -14) * (frac / 1024)
@@ -21,58 +27,57 @@ function readChannel(data, i, half) {
   return sign * Math.pow(2, exp - 15) * (1 + frac / 1024)
 }
 
-// Average the pixels just above the horizon so fog/mist always match whatever
-// sky is loaded. Returns a THREE.Color in display (sRGB) space, or null.
-function horizonColor(texture) {
-  try {
-    const img = texture.image || {}
-    const data = img.data
-    if (!data || !img.width || !img.height) return null
-    const half = !(data instanceof Float32Array)
-    const row = Math.floor(img.height * 0.53)
-    const step = Math.max(1, Math.floor(img.width / 48))
-    let r = 0, g = 0, b = 0, n = 0
-    for (let x = 0; x < img.width; x += step) {
-      const i = (row * img.width + x) * 4
-      r += readChannel(data, i, half)
-      g += readChannel(data, i + 1, half)
-      b += readChannel(data, i + 2, half)
-      n++
-    }
-    if (!n) return null
-    // Reinhard-ish tone map down to [0,1], then linear -> sRGB.
-    const tm = (v) => {
-      const t = Math.max(0, Math.min(v / Math.max(n, 1), 8)) / (1 + Math.max(0, Math.min(v / Math.max(n, 1), 8)))
-      return Math.pow(t, 1 / 2.2)
-    }
-    return new THREE.Color().setRGB(tm(r), tm(g), tm(b), THREE.SRGBColorSpace)
-  } catch (e) {
-    return null
-  }
+function pixels(texture) {
+  const img = texture && texture.image
+  if (!img || !img.data || !img.width || !img.height) return null
+  return { data: img.data, w: img.width, h: img.height, half: !(img.data instanceof Float32Array) }
 }
 
-// Average luminance of the whole sky, so lights can match its mood (a night
-// meadow HDRI should not be lit by a noon sun).
-function brightness(texture) {
-  try {
-    const img = texture.image || {}
-    const data = img.data
-    if (!data || !img.width || !img.height) return 0.5
-    const half = !(data instanceof Float32Array)
-    const stepX = Math.max(1, Math.floor(img.width / 40))
-    const stepY = Math.max(1, Math.floor(img.height / 24))
-    let sum = 0, n = 0
-    for (let y = 0; y < img.height; y += stepY) {
-      for (let x = 0; x < img.width; x += stepX) {
-        const i = (y * img.width + x) * 4
-        sum += 0.2126 * readChannel(data, i, half) + 0.7152 * readChannel(data, i + 1, half) + 0.0722 * readChannel(data, i + 2, half)
-        n++
-      }
+const LUMA = (d, i, half) =>
+  0.2126 * readChannel(d, i, half) + 0.7152 * readChannel(d, i + 1, half) + 0.0722 * readChannel(d, i + 2, half)
+
+// Reinhard-ish tone map of a linear value down to [0,1], then linear -> sRGB.
+const tm = (v) => Math.pow(Math.min(v, 8) / (1 + Math.min(v, 8)), 1 / 2.2)
+
+// Average the band straddling the horizon so fog/mist always match the sky —
+// averaging across the seam means it works whichever way round the panorama's
+// rows happen to be stored.
+function horizonColor(texture) {
+  const p = pixels(texture)
+  if (!p) return null
+  const stepX = Math.max(1, Math.floor(p.w / 48))
+  const y0 = Math.floor(p.h * 0.44)
+  const y1 = Math.floor(p.h * 0.56)
+  let r = 0, g = 0, b = 0, n = 0
+  for (let y = y0; y < y1; y++) {
+    for (let x = 0; x < p.w; x += stepX) {
+      const i = (y * p.w + x) * 4
+      r += readChannel(p.data, i, p.half)
+      g += readChannel(p.data, i + 1, p.half)
+      b += readChannel(p.data, i + 2, p.half)
+      n++
     }
-    return n ? sum / n : 0.5
-  } catch (e) {
-    return 0.5
   }
+  if (!n) return null
+  return new THREE.Color().setRGB(tm(r / n), tm(g / n), tm(b / n), THREE.SRGBColorSpace)
+}
+
+// Overall luminance of the panorama -> how bright a sky is this? Drives the
+// lights so a moonlit meadow never gets lit like noon. Log scale: night skies
+// land near 0.02, sunny ones near 1+.
+function brightness(texture) {
+  const p = pixels(texture)
+  if (!p) return 0.5
+  const stepX = Math.max(1, Math.floor(p.w / 48))
+  const stepY = Math.max(1, Math.floor(p.h / 32))
+  let sum = 0, n = 0
+  for (let y = 0; y < p.h; y += stepY) {
+    for (let x = 0; x < p.w; x += stepX) {
+      sum += LUMA(p.data, (y * p.w + x) * 4, p.half)
+      n++
+    }
+  }
+  return n ? sum / n : 0.5
 }
 
 // Cheap stand-in if the .hdr ever fails to fetch: a vertical gradient dome.
@@ -82,9 +87,9 @@ function fallbackSky(scene) {
   c.height = 128
   const g = c.getContext('2d')
   const grad = g.createLinearGradient(0, 0, 0, 128)
-  grad.addColorStop(0, '#4f7fc4')
-  grad.addColorStop(0.55, '#a9bcc6')
-  grad.addColorStop(1, '#d9c9a8')
+  grad.addColorStop(0, '#3f74bd')
+  grad.addColorStop(0.5, '#bfd0da')
+  grad.addColorStop(1, '#e6dcc4')
   g.fillStyle = grad
   g.fillRect(0, 0, 8, 128)
   const tex = new THREE.CanvasTexture(c)
@@ -94,23 +99,21 @@ function fallbackSky(scene) {
   scene.environment = tex
 }
 
-export function createSky(scene, { environmentIntensity = 0.65, blur = 0.1, sunLight, hemiLight } = {}) {
+export function createSky(scene, { environmentIntensity = 0.85, blur = 0.015, sunLight, hemiLight, onExposure } = {}) {
   const sky = { texture: null, ready: false, fogColor: new THREE.Color(SKY_FOG_COLOR), brightness: 0.5 }
 
-  // Match the props to the sky's mood: a dusk/night meadow gets cool moonlight,
-  // a bright one gets a warm sun. Everything is driven by measured luminance.
   function applyMood(lum) {
-    const t = THREE.MathUtils.clamp((lum - 0.12) / 0.55, 0, 1) // 0 = night, 1 = day
     sky.brightness = lum
+    const t = THREE.MathUtils.clamp((Math.log10(Math.max(lum, 1e-4)) + 1.6) / 1.3, 0, 1) // 0 night .. 1 day
     if (sunLight) {
-      sunLight.color.setRGB(
-        THREE.MathUtils.lerp(0.62, 1.0, t),
-        THREE.MathUtils.lerp(0.7, 0.94, t),
-        THREE.MathUtils.lerp(1.0, 0.82, t)
-      )
-      sunLight.intensity = THREE.MathUtils.lerp(0.55, 2.0, t)
+      sunLight.color.setRGB(THREE.MathUtils.lerp(0.62, 1.0, t), THREE.MathUtils.lerp(0.7, 0.94, t), THREE.MathUtils.lerp(1.0, 0.84, t))
+      sunLight.intensity = THREE.MathUtils.lerp(0.5, 2.6, t)
     }
-    if (hemiLight) hemiLight.intensity = THREE.MathUtils.lerp(0.18, 0.45, t)
+    if (hemiLight) {
+      hemiLight.intensity = THREE.MathUtils.lerp(0.15, 0.55, t)
+      hemiLight.color.setRGB(THREE.MathUtils.lerp(0.6, 0.86, t), THREE.MathUtils.lerp(0.68, 0.93, t), 1)
+    }
+    if (onExposure) onExposure(THREE.MathUtils.lerp(1.25, 1.0, t))
   }
 
   new HDRLoader().load(
@@ -121,7 +124,7 @@ export function createSky(scene, { environmentIntensity = 0.65, blur = 0.1, sunL
       sky.ready = true
       scene.background = tex
       scene.environment = tex
-      scene.backgroundBlurriness = blur // soften banding but keep horizon detail
+      scene.backgroundBlurriness = blur // keep cloud detail but soften banding
       scene.environmentIntensity = environmentIntensity
 
       const measured = horizonColor(tex)

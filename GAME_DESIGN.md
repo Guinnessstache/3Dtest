@@ -11,10 +11,13 @@ hatchback hunts you down. Barrels are solid — and volatile if you hit them har
 ## Current features
 - Grassy lawn arena (Poly Haven "Leafy Grass" PBR tiles, src/ground.js) with a
   low hedge marking the bounds, shadows, and an open view of the countryside
-- **Real sky** (src/sky.js): Poly Haven HDRI "Kloppenheim 02" is the background
-  *and* the environment map (image-based lighting), so props reflect the fields.
-  ACES tone mapping, slightly blurred background, fog colour matched to the
-  horizon haze; a gradient dome stands in if the .hdr ever fails to load.
+- **Real sky** (src/sky.js): the Poly Haven HDRI **"Kloppenheim 03 (Pure Sky)"**
+  is the background *and* the environment map (image-based lighting), so props
+  reflect the fields. ACES tone mapping, fog colour measured from the panorama's
+  horizon band, and exposure/lights auto-tuned to the sky's brightness; a gradient
+  dome stands in if the .hdr ever fails to load. The chase camera looks down only
+  18° so the skyline stays in frame (a steeper pitch puts the horizon off-screen
+  and the ground half of any panorama reads as "green sky").
 - **Moving gems** (src/gems.js): six gems wander the lawn, bounce off the hedge
   and barrels, and flee when the ball gets close. Collecting one is +10 and it
   respawns somewhere else.

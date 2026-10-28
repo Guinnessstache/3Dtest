@@ -84,6 +84,25 @@
       ],
       "bytes": 1740414,
       "added": "2026-10-27T23:42:27.696Z"
+    },
+    {
+      "id": "kloppenheim_03_puresky",
+      "name": "Kloppenheim 03 (Pure Sky)",
+      "type": "hdris",
+      "source": "Poly Haven",
+      "url": "https://polyhaven.com/a/kloppenheim_03_puresky",
+      "license": "CC0",
+      "authors": [
+        "Greg Zaal",
+        "Jarod Guest"
+      ],
+      "resolution": "1k",
+      "entry": "assets/skies/kloppenheim_03_puresky_1k.hdr",
+      "files": [
+        "assets/skies/kloppenheim_03_puresky_1k.hdr"
+      ],
+      "bytes": 1428760,
+      "added": "2026-10-27T23:54:28.715Z"
     }
   ]
 }

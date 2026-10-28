@@ -36,7 +36,7 @@ export function createGround(scene, renderer, halfSize) {
   // Endless meadow skirt so the lawn never shows a visible edge under the fog.
   const skirt = new THREE.Mesh(
     new THREE.PlaneGeometry(halfSize * 60, halfSize * 60),
-    new THREE.MeshStandardMaterial({ color: 0x5b7a3c, roughness: 1 })
+    new THREE.MeshStandardMaterial({ color: 0x778c52, roughness: 1 })
   )
   skirt.rotation.x = -Math.PI / 2
   skirt.position.y = -0.05

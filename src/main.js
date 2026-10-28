@@ -27,19 +27,35 @@ scene.fog = new THREE.Fog(SKY_FOG_COLOR, 40, 130)
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000)
 
+// Chase rig. The pitch is deliberately shallow: with a 60° vertical FOV, looking
+// down more than ~28° puts the horizon off the top of the screen and the "sky"
+// becomes grass. 16° keeps a good band of skyline in frame while still reading
+// the lawn below.
+const CAM_DIST = 26
+const CAM_PITCH = THREE.MathUtils.degToRad(18)
+const DEAD_DIST = 14
+const DEAD_PITCH = THREE.MathUtils.degToRad(30)
+
 // The HDRI does most of the ambient work now; these just shape the shadows and
 // get re-tinted by createSky to suit whatever sky actually loaded.
-const hemi = new THREE.HemisphereLight(0xdff0ff, 0x3a4a2c, 0.35)
+const hemi = new THREE.HemisphereLight(0xdff0ff, 0x4a5236, 0.4)
 scene.add(hemi)
-const sun = new THREE.DirectionalLight(0xfff0d0, 1.9)
-sun.position.set(-18, 22, -12)
+const sun = new THREE.DirectionalLight(0xfff0d0, 2.2)
+sun.position.set(-26, 34, -18)
 sun.castShadow = true
 sun.shadow.camera.left = sun.shadow.camera.bottom = -30
 sun.shadow.camera.right = sun.shadow.camera.top = 30
 sun.shadow.bias = -0.0005
 scene.add(sun)
 
-createSky(scene, { environmentIntensity: 0.7, blur: 0.08, sunLight: sun, hemiLight: hemi })
+createSky(scene, {
+  environmentIntensity: 0.9,
+  blur: 0.015,
+  sunLight: sun,
+  hemiLight: hemi,
+  // Brighter skies get less exposure — keeps the clouds out of clipping.
+  onExposure: (v) => (renderer.toneMappingExposure = v)
+})
 
 createGround(scene, renderer, ARENA)
 createArenaEdge(scene, ARENA)
@@ -67,6 +83,7 @@ const warn = document.getElementById('warn')
 
 const velocity = new THREE.Vector3()
 const camTarget = new THREE.Vector3()
+const lookTarget = new THREE.Vector3()
 const shakeOffset = new THREE.Vector3()
 const timer = new THREE.Timer()
 
@@ -173,17 +190,24 @@ function tick() {
 
   fx.update(dt)
 
-  // Follow camera with a little impact shake; creep in close when you die.
-  const height = state.over ? 9 : 14
-  const back = state.over ? 10 : 16
-  camTarget.set(player.position.x, height, player.position.z + back)
+  // Follow camera: sits behind the ball on +Z and looks slightly ahead of it, so
+  // the pitch stays at CAM_PITCH and the HDRI horizon stays in frame. When you
+  // die we drop in tighter and steeper for the post-mortem.
+  const dist = state.over ? DEAD_DIST : CAM_DIST
+  const pitch = state.over ? DEAD_PITCH : CAM_PITCH
+  camTarget.set(
+    player.position.x,
+    player.position.y + Math.sin(pitch) * dist,
+    player.position.z + Math.cos(pitch) * dist
+  )
   camera.position.lerp(camTarget, 0.08)
   if (fx.shake > 0.001) {
     shakeOffset.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
       .multiplyScalar(fx.shake * 1.4)
     camera.position.add(shakeOffset)
   }
-  camera.lookAt(player.position.x, 1, player.position.z)
+  lookTarget.set(player.position.x, 1.2, player.position.z - 3)
+  camera.lookAt(lookTarget)
 
   renderer.render(scene, camera)
 }
